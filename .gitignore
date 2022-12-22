@@ -1,0 +1,6 @@
+cmake-build-debug/
+cmake-build-tsypk/
+cmake-build-debug/*
+cmake-build-tsypk/*
+CMakeLists.txt
+.idea
