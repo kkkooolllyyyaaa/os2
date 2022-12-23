@@ -117,7 +117,6 @@ static ssize_t read_proc(struct file *filp, char __user *ubuf, size_t count,
 			 loff_t *ppos)
 {
 	struct task_struct *ts;
-	mutex_lock(&my_mutex);
 	printk(KERN_INFO "Мьютекс захвачен...");
 
 	ts = get_pid_task(find_get_pid(pid), PIDTYPE_PID);
@@ -170,6 +169,8 @@ static ssize_t read_proc(struct file *filp, char __user *ubuf, size_t count,
 	}
 
 	*ppos = len;
+	mutex_unlock(&my_mutex);
+
 	return len;
 }
 
@@ -177,6 +178,8 @@ static ssize_t write_proc(struct file *filp, const char __user *ubuf,
 			  size_t count, loff_t *ppos)
 {
 	char buf[BUF_SIZE];
+	mutex_lock(&my_mutex);
+
 
 	printk(KERN_INFO "Происходит запись в файл...");
 	if (*ppos > 0 || count > BUF_SIZE) {
@@ -193,7 +196,6 @@ static ssize_t write_proc(struct file *filp, const char __user *ubuf,
 
 	*ppos = strlen(buf);
     printk(KERN_INFO "Запись прошла успешно");
-	mutex_unlock(&my_mutex);
 	printk(KERN_INFO "Мьютекс отпущен...");
 	return strlen(buf);
 }
