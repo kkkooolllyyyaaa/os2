@@ -21,7 +21,7 @@ MODULE_AUTHOR("Цыпандин Николай Петрович");
 MODULE_DESCRIPTION("Lab2 | procfs: task_cputime, vm_area_struct");
 MODULE_VERSION("1.0");
 
-static struct mutex *my_mutex;
+static struct mutex my_mutex;
 static struct proc_dir_entry *parent;
 static int pid;
 
@@ -116,9 +116,11 @@ static size_t write_task_cputime_struct(char __user *ubuf,
 static ssize_t read_proc(struct file *filp, char __user *ubuf, size_t count,
 			 loff_t *ppos)
 {
+	struct task_struct *ts;
 	mutex_lock(&my_mutex);
 	printk(KERN_INFO "Мьютекс захвачен...");
-	struct task_struct *ts = get_pid_task(find_get_pid(pid), PIDTYPE_PID);
+
+	ts = get_pid_task(find_get_pid(pid), PIDTYPE_PID);
 
 	char buf[BUF_SIZE];
 	size_t len = 0;
@@ -215,7 +217,7 @@ static void __exit lab_driver_exit(void)
 	if(mutex_is_locked(&my_mutex)){
 		printk(KERN_ERR "Мьютекс не был отпущен");
 		mutex_unlock(&my_mutex);
-		return -1;
+		return;
 	}
 
 	proc_remove(parent);
