@@ -1,6 +1,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/mutex.h>
 #include <linux/proc_fs.h>
 #include <linux/slab.h>
 #include <linux/fs.h>
@@ -20,6 +21,7 @@ MODULE_AUTHOR("Цыпандин Николай Петрович");
 MODULE_DESCRIPTION("Lab2 | procfs: task_cputime, vm_area_struct");
 MODULE_VERSION("1.0");
 
+static struct mutex *my_mutex;
 static struct proc_dir_entry *parent;
 static int pid;
 
@@ -114,6 +116,8 @@ static size_t write_task_cputime_struct(char __user *ubuf,
 static ssize_t read_proc(struct file *filp, char __user *ubuf, size_t count,
 			 loff_t *ppos)
 {
+	mutex_lock(&my_mutex);
+	printk(KERN_INFO "Мьютекс захвачен...");
 	struct task_struct *ts = get_pid_task(find_get_pid(pid), PIDTYPE_PID);
 
 	char buf[BUF_SIZE];
@@ -187,6 +191,8 @@ static ssize_t write_proc(struct file *filp, const char __user *ubuf,
 
 	*ppos = strlen(buf);
     printk(KERN_INFO "Запись прошла успешно");
+	mutex_unlock(&my_mutex);
+	printk(KERN_INFO "Мьютекс отпущен...");
 	return strlen(buf);
 }
 
@@ -199,11 +205,19 @@ static int __init lab_driver_init(void)
 	}
 	proc_create("my_driver", 0666, parent, &proc_fops);
 	printk(KERN_INFO "Драйвер загружен!");
+	mutex_init(&my_mutex);
+	printk(KERN_INFO "Мьютекс инициализирован!");
 	return 0;
 }
 
 static void __exit lab_driver_exit(void)
 {
+	if(mutex_is_locked(&my_mutex)){
+		printk(KERN_ERR "Мьютекс не был отпущен");
+		mutex_unlock(&my_mutex);
+		return -1;
+	}
+
 	proc_remove(parent);
 	printk(KERN_INFO "Драйвер удален!");
 }
